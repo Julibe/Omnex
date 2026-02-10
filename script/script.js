@@ -1,276 +1,274 @@
-let debug = true;
-console.clear();
+/**
+ * Omnex UI Controller
+ */
 
-/* ==========================================================================
-   CONFIG
-========================================================================== */
+'use strict';
 
-const config_smoothness = 0.08;
-const config_tilt = 15;
-const config_magnet = 10;
+// --- CONFIGURATION ---
+const UI_CONFIG = {
+    tilt_max: 15,
+    tilt_scale: 1.05,
+    smoothness: 0.1
+};
 
-/* ==========================================================================
-   KINETIC CARD SYSTEM
-========================================================================== */
+// --- GLOBAL STATE ---
+const activeAnimations = new Map();
+let waveSurferInstance = null;
 
-const active_interactions = new Map();
+// --- UTILITIES ---
+const lerp = (start, end, factor) => start + (end - start) * factor;
 
-function lerp(a, b, t) {
-	return a + (b - a) * t;
+/**
+ * KINETIC CARD ENGINE
+ */
+function updateKineticCards() {
+    activeAnimations.forEach((state, card) => {
+        state.currentX = lerp(state.currentX, state.targetX, UI_CONFIG.smoothness);
+        state.currentY = lerp(state.currentY, state.targetY, UI_CONFIG.smoothness);
+        card.style.transform = `perspective(1000px) rotateX(${state.currentX}deg) rotateY(${state.currentY}deg) scale3d(${UI_CONFIG.tilt_scale}, ${UI_CONFIG.tilt_scale}, ${UI_CONFIG.tilt_scale})`;
+
+        const icon = card.querySelector('.magnetic-element');
+        if(icon) {
+            icon.style.transform = `translateX(${state.currentY * 2}px) translateY(${state.currentX * 2}px)`;
+        }
+
+        if (!state.active && Math.abs(state.currentX) < 0.01 && Math.abs(state.currentY) < 0.01) {
+            card.style.transform = '';
+            if(icon) icon.style.transform = '';
+            activeAnimations.delete(card);
+        }
+    });
+
+    if (activeAnimations.size > 0) requestAnimationFrame(updateKineticCards);
 }
 
-function runKineticLoop() {
-	if (!active_interactions.size) return;
+function handleCardMove(e, card) {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
 
-	active_interactions.forEach((s, card) => {
-		s.rx = lerp(s.rx, s.trx, config_smoothness);
-		s.ry = lerp(s.ry, s.try, config_smoothness);
-		s.mx = lerp(s.mx, s.tmx, config_smoothness);
-		s.my = lerp(s.my, s.tmy, config_smoothness);
+    const rotateX = ((y - centerY) / centerY) * -UI_CONFIG.tilt_max;
+    const rotateY = ((x - centerX) / centerX) * UI_CONFIG.tilt_max;
 
-		card.style.transform = `perspective(1000px)
-			 rotateX(${s.rx}deg)
-			 rotateY(${s.ry}deg)
-			 scale3d(1.02,1.02,1.02)`;
-
-		const magnet = card.querySelector(".magnetic-element");
-		if (magnet) {
-			magnet.style.transform = `translate3d(${s.mx}px, ${s.my}px, 20px)`;
-		}
-
-		if (!s.active && Math.abs(s.rx) + Math.abs(s.ry) < 0.01) {
-			card.style.transform = "";
-			if (magnet) magnet.style.transform = "";
-			active_interactions.delete(card);
-		}
-	});
-
-	requestAnimationFrame(runKineticLoop);
+    if (!activeAnimations.has(card)) {
+        activeAnimations.set(card, { active: true, currentX: 0, currentY: 0, targetX: rotateX, targetY: rotateY });
+        requestAnimationFrame(updateKineticCards);
+    } else {
+        const state = activeAnimations.get(card);
+        state.active = true; state.targetX = rotateX; state.targetY = rotateY;
+    }
 }
 
-function handleInteraction(e, card) {
-	const r = card.getBoundingClientRect();
-	const x = e.clientX - r.left;
-	const y = e.clientY - r.top;
-	const cx = r.width / 2;
-	const cy = r.height / 2;
-
-	const trx = -((y - cy) / cy) * config_tilt;
-	const tryy = ((x - cx) / cx) * config_tilt;
-	const tmx = ((x - cx) / cx) * config_magnet;
-	const tmy = ((y - cy) / cy) * config_magnet;
-
-	if (!active_interactions.has(card)) {
-		active_interactions.set(card, {
-			active: true,
-			rx: 0,
-			ry: 0,
-			mx: 0,
-			my: 0,
-			trx,
-			try: tryy,
-			tmx,
-			tmy,
-		});
-		requestAnimationFrame(runKineticLoop);
-	} else {
-		const s = active_interactions.get(card);
-		s.active = true;
-		s.trx = trx;
-		s.try = tryy;
-		s.tmx = tmx;
-		s.tmy = tmy;
-	}
+function handleCardLeave(card) {
+    if (activeAnimations.has(card)) {
+        const state = activeAnimations.get(card);
+        state.active = false; state.targetX = 0; state.targetY = 0;
+    }
 }
 
-function handleMouseLeave(card) {
-	const s = active_interactions.get(card);
-	if (!s) return;
-	s.active = false;
-	s.trx = s.try = s.tmx = s.tmy = 0;
+/**
+ * VIEWER SYSTEM
+ */
+window.openViewer = async function(element) {
+    try {
+        const b64 = element.getAttribute('data-b64');
+        const item = JSON.parse(atob(b64));
+
+        const modal = document.getElementById('modal');
+        const mBody = document.getElementById('mBody');
+
+        document.getElementById('mTitle').textContent = item.filename;
+        document.getElementById('mMeta').textContent = `${item.mime_type} • ${item.size_formatted}`;
+
+        const mDown = document.getElementById('mDown');
+        mDown.href = item.actual_path;
+        mDown.setAttribute('download', item.filename);
+
+        const ext = item.extension;
+        const path = item.actual_path;
+        let mediaHTML = '';
+
+        if(waveSurferInstance) {
+            waveSurferInstance.destroy();
+            waveSurferInstance = null;
+        }
+
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'tiff', 'heic', 'avif','svg'].includes(ext);
+
+        if (['glb','gltf','obj','fbx'].includes(ext)) {
+            mediaHTML = `<model-viewer src="${path}" camera-controls auto-rotate shadow-intensity="1" ar style="width: 100%; height: 100%;" background-color="#121212"></model-viewer>`;
+        } else if (['mp4', 'webm', 'mov', 'mkv','m4v', 'avi', 'flv', 'wmv', 'mts', 'ts', 'ogv', 'vp9'].includes(ext)) {
+            mediaHTML = `<video controls autoplay style="max-width: 100%; max-height: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);"><source src="${path}" type="${item.mime_type}"></video>`;
+        } else if (['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'opus', 'weba'].includes(ext)) {
+            mediaHTML = `<div style="width: 100%; max-width: 600px; padding: 20px;"><div id="waveform" style="width: 100%;"></div><div style="text-align: center; margin-top: 20px;"><button class="btn" onclick="toggleAudio()"><i id="playPauseIcon" class="fa-solid fa-play"></i> Play / Pause</button></div></div>`;
+            setTimeout(() => initAudio(path), 50);
+        } else if (isImage) {
+            mediaHTML = `<img src="${path}" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px;">`;
+        } else if (['json', 'xml', 'js', 'css', 'html', 'php', 'txt', 'md', 'yml'].includes(ext)) {
+            mediaHTML = `<div class="text-viewer-container"><pre><code id="codeBlock" class="language-${ext}">Loading...</code></pre></div>`;
+            loadTextContent(path);
+        } else if(['pdf'].includes(ext)) {
+            mediaHTML = `<iframe src="${path}" style="width: 100%; height: 100%; border: none; border-radius: 12px;"></iframe>`;
+        } else {
+            mediaHTML = `<div style="text-align: center; color: #666;"><i class="fa-solid fa-file-circle-question" style="font-size: 4rem; margin-bottom: 1rem;"></i><p>Preview not available</p></div>`;
+        }
+
+        // TAB SYSTEM
+        if (isImage) {
+            mBody.innerHTML = `
+                <div style="display: flex; flex-direction: column; width: 100%; height: 100%;">
+                    <div class="modal-tabs">
+                        <button class="modal-tab-btn active" onclick="switchTab('view')"><i class="fa-regular fa-eye"></i> Preview</button>
+                        <button class="modal-tab-btn" onclick="switchTab('meta')"><i class="fa-solid fa-circle-info"></i> EXIF Data</button>
+                    </div>
+                    <div id="tab-view" class="tab-content active">${mediaHTML}</div>
+                    <div id="tab-meta" class="tab-content">
+                        <div class="exif-container"><div style="text-align:center; padding: 2rem; color: var(--text_dim);"><i class="fa-solid fa-spinner fa-spin"></i> Reading Metadata...</div></div>
+                    </div>
+                </div>`;
+            loadExifData(path);
+        } else {
+            mBody.innerHTML = mediaHTML;
+        }
+
+        modal.classList.add('active');
+
+    } catch (e) {
+        console.error("Viewer Error:", e);
+        showToast("Error opening file", "error");
+    }
+};
+
+window.closeModal = function() {
+    const modal = document.getElementById('modal');
+    modal.classList.remove('active');
+    if(waveSurferInstance) {
+        waveSurferInstance.destroy();
+        waveSurferInstance = null;
+    }
+    setTimeout(() => { document.getElementById('mBody').innerHTML = ''; }, 300);
+};
+
+// --- TABS & EXIF LOGIC ---
+window.switchTab = function(tabName) {
+    document.querySelectorAll('.modal-tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+};
+
+async function loadExifData(url) {
+    const container = document.querySelector('#tab-meta .exif-container');
+
+    try {
+        // EXPLICIT CHECK FOR GLOBAL OBJECT
+        if (typeof window.ExifReader === 'undefined') {
+            throw new Error("ExifReader library not loaded");
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Network response was not ok");
+        const fileBlob = await response.blob();
+
+        // Use global ExifReader
+        const tags = await window.ExifReader.load(fileBlob);
+
+        const ignoredTags = ['MakerNote', 'UserComment', 'Thumbnail', 'PrintIM', 'Padding', 'ColorSpace'];
+        let tableHtml = '<table class="exif-table"><tbody>';
+        let count = 0;
+
+        for (let key in tags) {
+            if (ignoredTags.includes(key)) continue;
+            let val = tags[key].description ? tags[key].description : tags[key].value;
+            if (typeof val === 'object') val = JSON.stringify(val);
+            if (typeof val === 'string' && val.length > 50) val = val.substring(0, 50) + '...';
+
+            tableHtml += `<tr><td class="exif-key">${key}</td><td class="exif-val">${val}</td></tr>`;
+            count++;
+        }
+        tableHtml += '</tbody></table>';
+
+        container.innerHTML = (count === 0) ? '<div style="text-align:center; padding:2rem; color:#666;">No EXIF metadata found.</div>' : tableHtml;
+
+    } catch (error) {
+        console.warn('Exif Error', error);
+        container.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--accent);">Could not read metadata.<br><small style="opacity:0.6">' + error.message + '</small></div>';
+    }
 }
 
-/* ==========================================================================
-   MODAL REFERENCES
-========================================================================== */
+// --- HELPER LOADERS ---
+function loadTextContent(path) {
+    fetch(path)
+        .then(r => r.text())
+        .then(text => {
+            const codeBlock = document.getElementById('codeBlock');
+            if(codeBlock) {
+                codeBlock.textContent = text;
+                if(window.Prism) Prism.highlightElement(codeBlock);
+            }
+        });
+}
 
-const modal = {
-	root: null,
-	body: null,
-	title: null,
-	meta: null,
-	down: null,
+function initAudio(path) {
+    const rootStyles = getComputedStyle(document.documentElement);
+    const accent = rootStyles.getPropertyValue('--accent').trim();
+    waveSurferInstance = WaveSurfer.create({
+        container: '#waveform',
+        waveColor: '#4b5563',
+        progressColor: accent,
+        cursorColor: '#ffffff',
+        barWidth: 2, barRadius: 3, height: 120, barGap: 2
+    });
+    waveSurferInstance.load(path);
+    waveSurferInstance.on('ready', () => waveSurferInstance.play());
+    waveSurferInstance.on('play', () => document.getElementById('playPauseIcon').className = 'fa-solid fa-pause');
+    waveSurferInstance.on('pause', () => document.getElementById('playPauseIcon').className = 'fa-solid fa-play');
+}
+
+window.toggleAudio = function() {
+    if(waveSurferInstance) waveSurferInstance.playPause();
 };
 
-/* ==========================================================================
-   ASSET VIEWER
-========================================================================== */
-
-window.openViewer = function (card) {
-	if (!card || !card.dataset || !card.dataset.b64) return;
-
-	let data;
-	try {
-		data = JSON.parse(atob(card.dataset.b64));
-	} catch (e) {
-		if (debug) console.error(e);
-		return;
-	}
-
-	const { filename, mime_type, size_formatted, actual_path, extension } =
-		data;
-
-	modal.title.textContent = filename || "Unknown";
-	modal.meta.textContent = `${mime_type} • ${size_formatted}`;
-	modal.down.href = actual_path;
-	modal.down.setAttribute("download", filename || "");
-
-	modal.body.innerHTML = "";
-
-	/* ================= IMAGE ================= */
-
-	if (mime_type.startsWith("image/")) {
-		const img = document.createElement("img");
-		img.src = actual_path;
-		img.style.maxWidth = "100%";
-		img.style.maxHeight = "75vh";
-		img.style.objectFit = "contain";
-		modal.body.appendChild(img);
-	} else if (["glb", "gltf"].includes(extension)) {
-
-	/* ================= 3D MODELS ================= */
-		modal.body.innerHTML = `
-			<model-viewer
-				src="${actual_path}"
-				camera-controls
-				auto-rotate
-				shadow-intensity="1"
-				style="width:100%; height:75vh;">
-			</model-viewer>
-		`;
-	} else if (mime_type.startsWith("audio/")) {
-
-	/* ================= AUDIO + WAVESURFER ================= */
-		const audio = document.createElement("audio");
-		audio.src = actual_path;
-		audio.controls = true;
-		audio.style.width = "100%";
-
-		const wave = document.createElement("div");
-		wave.style.height = "100px";
-		wave.style.marginTop = "12px";
-
-		modal.body.appendChild(audio);
-		modal.body.appendChild(wave);
-
-		const ws = WaveSurfer.create({
-			container: wave,
-			waveColor: "#7c3aed",
-			progressColor: "#d946ef",
-			height: 100,
-			barWidth: 2,
-			responsive: true,
-		});
-
-		ws.load(actual_path);
-
-		audio.addEventListener("play", () => ws.play());
-		audio.addEventListener("pause", () => ws.pause());
-		audio.addEventListener("seeked", () =>
-			ws.seekTo(audio.currentTime / audio.duration),
-		);
-		ws.on("interaction", (p) => (audio.currentTime = p * audio.duration));
-	} else if (mime_type.startsWith("video/")) {
-
-	/* ================= VIDEO ================= */
-		const video = document.createElement("video");
-		video.src = actual_path;
-		video.controls = true;
-		video.style.width = "100%";
-		video.style.maxHeight = "75vh";
-		modal.body.appendChild(video);
-	} else if (extension === "md") {
-
-	/* ================= MARKDOWN ================= */
-		fetch(actual_path)
-			.then((r) => r.text())
-			.then((t) => {
-				const article = document.createElement("article");
-				article.className = "markdown-body";
-				article.innerHTML = marked.parse(t);
-				modal.body.appendChild(article);
-				if (window.Prism) Prism.highlightAllUnder(article);
-			});
-	} else if (
-
-	/* ================= TEXT + CODE ================= */
-		mime_type.startsWith("text/") ||
-		mime_type.includes("json") ||
-		mime_type.includes("xml")
-	) {
-		fetch(actual_path)
-			.then((r) => r.text())
-			.then((t) => {
-				const pre = document.createElement("pre");
-				const code = document.createElement("code");
-				code.textContent = t;
-
-				if (extension) code.className = `language-${extension}`;
-				pre.appendChild(code);
-				modal.body.appendChild(pre);
-
-				if (window.Prism) Prism.highlightElement(code);
-			});
-	} else {
-
-	/* ================= FALLBACK ================= */
-		modal.body.innerHTML =
-			'<p style="text-align:center;opacity:.6">Preview not supported</p>';
-	}
-
-	modal.root.classList.add("active");
+window.filterGrid = function() {
+    // Client-side filtering currently only filters what's on the current page
+    // For full filtering with pagination, you'd typically need server-side filtering.
+    // This implementation just hides items on the current 25-item page.
+    const input = document.getElementById('assetSearch');
+    const filter = input.value.toLowerCase();
+    const cards = document.querySelectorAll('.interactive-card');
+    cards.forEach(card => {
+        const name = card.getAttribute('data-name');
+        card.style.display = name.includes(filter) ? "flex" : "none";
+    });
 };
 
-window.closeModal = function () {
-	modal.root.classList.remove("active");
-	modal.root.querySelectorAll("audio,video").forEach((m) => m.pause());
-	setTimeout(() => (modal.body.innerHTML = ""), 200);
+window.toggleSidebar = function() {
+    document.getElementById('mainSidebar').classList.toggle('open');
 };
 
-/* ==========================================================================
-   UI HELPERS
-========================================================================== */
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('visible');
+    setTimeout(() => toast.classList.remove('visible'), 3000);
+}
 
-window.filterGrid = function () {
-	const v = document.getElementById("assetSearch").value.toLowerCase();
-	document.querySelectorAll(".interactive-card").forEach((c) => {
-		c.style.display = c.dataset.name.includes(v) ? "flex" : "none";
-	});
-};
+// --- INIT ---
+document.addEventListener('DOMContentLoaded', () => {
+    const cards = document.querySelectorAll('.interactive-card');
+    cards.forEach(card => {
+        card.addEventListener('mousemove', (e) => handleCardMove(e, card));
+        card.addEventListener('mouseleave', () => handleCardLeave(card));
+    });
 
-window.toggleSidebar = function () {
-	document.getElementById("mainSidebar").classList.toggle("open");
-};
+    const modal = document.getElementById('modal');
+    modal.addEventListener('click', (e) => {
+        if(e.target === modal) closeModal();
+    });
 
-/* ==========================================================================
-   INIT
-========================================================================== */
-
-document.addEventListener("DOMContentLoaded", () => {
-	modal.root = document.getElementById("modal");
-	modal.body = document.getElementById("mBody");
-	modal.title = document.getElementById("mTitle");
-	modal.meta = document.getElementById("mMeta");
-	modal.down = document.getElementById("mDown");
-
-	document.querySelectorAll(".interactive-card").forEach((card) => {
-		card.addEventListener("mousemove", (e) => handleInteraction(e, card));
-		card.addEventListener("mouseleave", () => handleMouseLeave(card));
-	});
-
-	document.addEventListener("keydown", (e) => {
-		if (e.key === "Escape") closeModal();
-	});
-
-	if (debug) console.log("[Omnex] Full kernel loaded. Nothing removed.");
+    document.addEventListener('keydown', (e) => {
+        if (e.key === "Escape") closeModal();
+    });
 });

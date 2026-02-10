@@ -3,7 +3,7 @@
 		* ----------------------------------------------------------------------------
 		* Omnex - The Asset Explorer where everything is accounted for
 		* ----------------------------------------------------------------------------
-		* Version: 4.1.2
+		* Version: 4.1.4
 		* Description:
 		* Omnex is a modern, intuitive asset management system built to explore, track,
 		* and understand all your assets in one place. With support for multiple file
@@ -28,6 +28,30 @@
 		* ----------------------------------------------------------------------------
 	*/
 
+	// --- DYNAMIC DATE ENGINE ---
+	// Automatically sets dates to the 1st of the current month
+	try {
+		$now = new DateTime('now');
+		$current_year = $now->format('Y');
+
+		// Force date to YYYY-MM-01 01:41:00 (preserving your preferred time)
+		$start_of_month = new DateTime($now->format('Y-m-01 01:41:00'));
+
+		$meta_date_simple = $start_of_month->format('Y-m-d'); // 2026-02-01
+		$meta_date_iso    = $start_of_month->format('c');     // ISO 8601 with Offset
+
+		// Expiration: +1 Year from now
+		$expire_date = clone $start_of_month;
+		$expire_date->modify('+1 year');
+		$meta_date_exp = $expire_date->format('c');
+	} catch (Exception $e) {
+		// Fallback if Date fails
+		$current_year = '2026';
+		$meta_date_simple = '2026-02-01';
+		$meta_date_iso = '2026-02-01T01:41:00-05:00';
+		$meta_date_exp = '2027-02-10T00:00:00-05:00';
+	}
+
 	// --- CONFIGURATION ---
 	$assets_dir_name = 'Assets';
 	$default_format = 'html';
@@ -38,20 +62,17 @@
 	// --- DYNAMIC UI THEME ENGINE ---
 	$ui_color = $_GET['color'] ?? $default_accent;
 
-	// Strict HEX validation to maintain logical integrity and security
+	// Strict HEX validation
 	if (!preg_match('/^[a-f0-9]{6}$/i', $ui_color)) {
 		$ui_color = $default_accent;
 	}
 
-	// Full decomposition of HEX to RGB for atmospheric glow calculations
+	// Full decomposition of HEX to RGB
 	list($r_val, $g_val, $b_val) = sscanf($ui_color, "%02x%02x%02x");
 	$accent_glow_rgba = "rgba($r_val, $g_val, $b_val, 0.15)";
 	$accent_border_rgba = "rgba($r_val, $g_val, $b_val, 0.4)";
 	$selection_bg_rgba = "rgba($r_val, $g_val, $b_val, 0.3)";
 
-	/**
-	 * Generates a deterministic hex color based on the input string logic
-	 */
 	function stringToColor($str_input) {
 		$hash_val = md5($str_input);
 		return substr($hash_val, 0, 6);
@@ -65,43 +86,32 @@
 	// Establish the Absolute Path to the Assets repository
 	$base_assets_path = realpath($script_dir_abs . DIRECTORY_SEPARATOR . $assets_dir_name);
 
-	// Logic Branch: Validate existence of the target directory
 	if (!$base_assets_path || !is_dir($base_assets_path)) {
 		die("CRITICAL ERROR: The directory './$assets_dir_name' was not found in the filesystem.");
 	}
 
 	// --- REQUEST PARAMETER PROCESSING ---
-
-	// Folder Navigation Logic (Relative to the Assets base)
 	$request_folder_param = $_GET['folder'] ?? '';
 	$valid_roots = [];
 
 	if (empty($request_folder_param)) {
-		// Default Branch: Target the primary Assets root
-		$valid_roots[] = ['path' => $base_assets_path, 'name' => 'Root'];
+		$valid_roots[] = ['path' => $base_assets_path, 'name' => 'Home'];
 	} else {
-		// Expansion Branch: Process multiple specific subfolders
 		$folder_parts = explode(',', $request_folder_param);
 		foreach($folder_parts as $p) {
 			$clean_p = trim($p);
 			if(empty($clean_p)) continue;
-
-			// Resolution of the relative path to the Assets baseline
 			$real_p = realpath($base_assets_path . DIRECTORY_SEPARATOR . $clean_p);
-
-			// Security logic: Ensure the target is contained within the Assets vault
 			if ($real_p && is_dir($real_p) && strpos($real_p, $base_assets_path) === 0) {
 				$valid_roots[] = ['path' => $real_p, 'name' => $clean_p];
 			}
 		}
 	}
 
-	// Fallback logic for empty root arrays
 	if (empty($valid_roots)) {
-		$valid_roots[] = ['path' => $base_assets_path, 'name' => 'Root'];
+		$valid_roots[] = ['path' => $base_assets_path, 'name' => 'Home'];
 	}
 
-	// State variables for View, Format, and Type filtering
 	$request_format = $_GET['format'] ?? $default_format;
 	$request_view = $_GET['view'] ?? '';
 	$request_type = $_GET['type'] ?? '';
@@ -110,7 +120,12 @@
 	$force_recursive = filter_var($_GET['showAll'] ?? false, FILTER_VALIDATE_BOOLEAN);
 	$is_recursive = $is_html_mode ? $force_recursive : true;
 
-	// Extension Filter Logic
+	// --- PAGINATION PARAMETERS ---
+	$items_per_page = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
+	if ($items_per_page < 1) $items_per_page = 20;
+	$current_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+	if ($current_page < 1) $current_page = 1;
+
 	$allowed_extensions = [];
 	if (!empty($request_type)) {
 		$type_parts = explode(',', $request_type);
@@ -134,7 +149,6 @@
 
 	if (!$is_virtual_root) {
 		if (!empty($request_view)) {
-			// Resolve target based on user navigation parameter
 			$target_candidate = realpath($base_assets_path . DIRECTORY_SEPARATOR . $request_view);
 			if ($target_candidate && strpos($target_candidate, $base_assets_path) === 0 && is_dir($target_candidate)) {
 				$scan_target = $target_candidate;
@@ -144,14 +158,11 @@
 		} else {
 			$scan_target = $valid_roots[0]['path'];
 		}
-
-		// Explicit path relative to Assets for the UI breadcrumb logic
 		$current_relative_view = substr($scan_target, strlen($base_assets_path));
 		$current_relative_view = ltrim(str_replace('\\', '/', $current_relative_view), '/');
 	}
 
 	// --- CORE UTILITY FUNCTIONS ---
-
 	function formatBytes($byte_count, $precision_val = 2) {
 		if ($byte_count <= 0) return '0 B';
 		$log_val = log($byte_count, 1024);
@@ -167,10 +178,8 @@
 				if ($f_item === '.' || $f_item === '..') continue;
 
 				$item_abs_path = $abs_path . DIRECTORY_SEPARATOR . $f_item;
-
 				$item_rel_to_assets = substr($item_abs_path, strlen($base_assets_path));
 				$item_rel_to_assets = ltrim(str_replace('\\', '/', $item_rel_to_assets), '/');
-
 				$item_rel_to_script = substr($item_abs_path, strlen($script_dir_abs));
 				$item_rel_to_script = ltrim(str_replace('\\', '/', $item_rel_to_script), '/');
 				$item_web_url = $base_url_root . '/' . $item_rel_to_script;
@@ -231,11 +240,18 @@
 	}
 
 	// --- UI COMPONENT RENDERER ---
-	function renderHtml($currentItems, $apiUrl, $currentRelPath, $isVirtual, $hexColor, $glowRgba, $borderRgba, $selectRgba, $defaultHex, $appName, $appDesc) {
+	function renderHtml($currentItems, $apiUrl, $currentRelPath, $isVirtual, $hexColor, $glowRgba, $borderRgba, $selectRgba, $defaultHex, $appName, $appDesc, $page, $limit, $current_year, $meta_date_simple, $meta_date_iso, $meta_date_exp) {
+
 		usort($currentItems, function($a_node, $b_node) {
 			if ($a_node['type'] !== $b_node['type']) return $a_node['type'] === 'dir' ? -1 : 1;
 			return strnatcasecmp($a_node['filename'], $b_node['filename']);
 		});
+
+		// Apply Pagination
+		$total_items = count($currentItems);
+		$total_pages = ceil($total_items / $limit);
+		$offset = ($page - 1) * $limit;
+		$paged_items = array_slice($currentItems, $offset, $limit);
 
 		$ui_breadcrumbs = [];
 		if (!$isVirtual && $currentRelPath) {
@@ -247,12 +263,15 @@
 			}
 		}
 
-		$mkLink = function($link_path = null, $link_type = null, $link_color = null) use ($defaultHex) {
-			$url_q = $_GET; unset($url_q['format']);
-			if ($link_path !== null) { if ($link_path === '') unset($url_q['view']); else $url_q['view'] = $link_path; }
-			if ($link_type !== null) { if ($link_type === '') unset($url_q['type']); else $url_q['type'] = $link_type; }
-			if ($link_color !== null) { $url_q['color'] = $link_color; }
-			return '?' . http_build_query($url_q);
+		$mkLink = function($params = []) use ($defaultHex, $page, $limit) {
+			$query = $_GET;
+			unset($query['format']);
+			if (!isset($query['limit']) && $limit !== 20) $query['limit'] = $limit;
+			foreach ($params as $key => $val) {
+				if ($val === null) unset($query[$key]);
+				else $query[$key] = $val;
+			}
+			return '?' . http_build_query($query);
 		};
 
 		$mkApiLink = function($link_format) use ($apiUrl) {
@@ -263,11 +282,13 @@
 
 		$filter_groups = [
 			'3D' => ['glb','gltf','obj','fbx'],
-			'Images' => ['jpg','jpeg','png','gif','webp','svg'],
-			'Video' => ['mp4','webm','mov','mkv'],
-			'Audio' => ['mp3','wav','ogg'],
-			'Code' => ['js','ts','jsx','tsx','html','css','scss','sass','json','xml'],
-			'Documents' => ['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','md']
+			'Images' => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'tiff', 'heic', 'avif','svg'],
+			'Video' => ['mp4', 'webm', 'mov', 'mkv','m4v', 'avi', 'flv', 'wmv', 'mts', 'ts', 'ogv', 'vp9'],
+			'Audio' => ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'opus', 'weba'],
+			'Code' => ['js','ts','jsx','tsx','html','css','scss','sass','json','xml','php','txt','md','yml'],
+			'Documents' => ['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','md'],
+			'Archives' => ['zip','rar','7z','tar','gz'],
+
 		];
 	?>
 	<!DOCTYPE html>
@@ -294,9 +315,6 @@
 		<meta name="description" content="<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe">
 		<meta name="keywords" content="apps, coding life, css3, cssdaily, dashboard, dashboard design, exchangerate api, fontawesome, frontend, glassmorphism, google apps script, google material icons, html5, java script, javascript, julibe, localstorage, minimalist, open source, openweathermap api, pixellab, productivity, productivity tools, startpage, uiux, web development, webos, widgets, Julibe, Amazing, Designer">
 		<meta name="author" content="Julibe">
-		<meta name="copyright" content="2026">
-		<meta name="date" content="2026-02-01">
-		<meta name="modified" content="2026-02-01">
 		<meta name="robots" content="index, follow">
 		<meta name="googlebot" content="index, follow">
 		<meta name="bingbot" content="index, follow">
@@ -316,9 +334,6 @@
 		<meta property="og:image" content="https://apps.julibe.com/media/vexom/./media/vexom/none-image.webp">
 		<meta property="og:image:secure_url" content="https://apps.julibe.com/media/vexom/./media/vexom/none-image.webp">
 		<meta property="og:image:alt" content="<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today.">
-		<meta property="article:published_time" content="2026-02-01T01:41:00-05:00">
-		<meta property="article:modified_time" content="2026-02-01T01:41:00-05:00">
-		<meta property="article:expiration_time" content="2027-02-10T00:00:00-05:00">
 		<meta property="og:email" content="mail@julibe.com">
 		<meta property="og:country-name" content="US">
 		<meta property="al:web:url" content="./">
@@ -346,13 +361,21 @@
 		<meta name="datacite.creator" content="Julibe">
 		<meta name="datacite.title" content="<?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️">
 		<meta name="datacite.publisher" content="Julibe">
-		<meta name="datacite.publicationYear" content="2026">
 		<meta name="datacite.resourceType" content="InteractiveResource">
 		<meta name="datacite.subject" content="apps, coding life, css3, cssdaily, dashboard, dashboard design, exchangerate api, fontawesome, frontend, glassmorphism, google apps script, google material icons, html5, java script, javascript, julibe, localstorage, minimalist, open source, openweathermap api, pixellab, productivity, productivity tools, startpage, uiux, web development, webos, widgets, Julibe, Amazing, Designer">
 		<meta name="datacite.description" content="<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe">
 		<meta name="datacite.language" content="en">
 		<meta name="datacite.url" content="./">
-		<meta name="datacite.dateIssued" content="2026-02-01">
+
+		<!-- DYNAMIC DATES -->
+		<meta name="copyright" content="<?php echo $current_year; ?>">
+		<meta name="date" content="<?php echo $meta_date_simple; ?>">
+		<meta name="modified" content="<?php echo $meta_date_simple; ?>">
+		<meta property="article:published_time" content="<?php echo $meta_date_iso; ?>">
+		<meta property="article:modified_time" content="<?php echo $meta_date_iso; ?>">
+		<meta property="article:expiration_time" content="<?php echo $meta_date_exp; ?>">
+		<meta name="datacite.publicationYear" content="<?php echo $current_year; ?>">
+		<meta name="datacite.dateIssued" content="<?php echo $meta_date_simple; ?>">
 
 		<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-TFV56799');</script>
 		<script async src="https://www.googletagmanager.com/gtag/js?id=G-416Q6HW7MT"></script>
@@ -360,19 +383,16 @@
 		<script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "v20xjtjk1h");</script>
 		<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"0948b735ca7842359091b2bd8fdefb54"}'></script>
 		<script>const firebaseConfig={"apiKey":"AIzaSyDhRbFy9m-NXZVkozYJwKdDYJuwsL6W_bw","authDomain":"pushnotificationsio.firebaseapp.com","databaseURL":"https:\/\/pushnotificationsio.firebaseio.com","projectId":"pushnotificationsio","storageBucket":"pushnotificationsio.appspot.com","messagingSenderId":"788493704860","appId":"1:788493704860:web:ba71fd692e7cc9651f5759","measurementId":"G-NXS0Z75BCH"};</script>
-		<script type="application/ld+json">{ "@context": "https://schema.org", "@type": "WebSite", "name": "<?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️", "url": "./", "description": "<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe", "author": { "@type": "Person", "name": "Julibe" }, "image": "https://apps.julibe.com/media/vexom/./media/vexom/none-image.webp", "dateCreated": "2026-02-01", "dateModified": "2026-02-01", "inLanguage": "en"}</script>
+		<script type="application/ld+json">{ "@context": "https://schema.org", "@type": "WebSite", "name": "<?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️", "url": "./", "description": "<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe", "author": { "@type": "Person", "name": "Julibe" }, "image": "https://apps.julibe.com/media/vexom/./media/vexom/none-image.webp", "dateCreated": "<?php echo $meta_date_simple; ?>", "dateModified": "<?php echo $meta_date_simple; ?>", "inLanguage": "en"}</script>
 
 		<link rel="stylesheet" href="styles/styles.css">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
-
 		<script type="module" src="https://unpkg.com/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
 		<script src="https://unpkg.com/exifreader@4.12.0/dist/exif-reader.min.js"></script>
 		<script src="https://unpkg.com/wavesurfer.js@7"></script>
@@ -399,7 +419,7 @@
 				</div>
 				<nav class="nav-section">
 					<div class="nav-head">Navigation</div>
-					<a href="<?php echo $mkLink('', null, $defaultHex); ?>" class="nav-link <?php echo $currentRelPath===''?'active':''; ?>"><i class="fa-solid fa-house"></i> Root</a>
+					<a href="<?php echo $mkLink(['view'=>null, 'type'=>null, 'page'=>1]); ?>" class="nav-link <?php echo $currentRelPath===''?'active':''; ?>"><i class="fa-solid fa-house"></i> Home</a>
 				</nav>
 				<nav class="nav-section">
 					<div class="nav-head">Folders</div>
@@ -408,7 +428,7 @@
 							if ($f_node['type'] !== 'dir') continue;
 							$node_f_color = stringToColor($f_node['filename']);
 						?>
-							<a href="<?php echo $mkLink($f_node['relative_path'], null, $node_f_color); ?>"
+							<a href="<?php echo $mkLink(['view'=>$f_node['relative_path'], 'page'=>1]); ?>"
 							class="nav-link"
 							style="--folder-hue: #<?php echo $node_f_color; ?>;">
 							<i class="fa-solid fa-folder" style="color: var(--folder-hue);"></i> <?php echo $f_node['filename']; ?>
@@ -418,20 +438,20 @@
 				</nav>
 				<nav class="nav-section">
 					<div class="nav-head">Filters</div>
-					<a href="<?php echo $mkLink(null, ''); ?>" class="nav-link <?php echo empty($_GET['type'])?'active':''; ?>"><i class="fa-solid fa-layer-group"></i> All Files</a>
+					<a href="<?php echo $mkLink(['type'=>null, 'page'=>1]); ?>" class="nav-link <?php echo empty($_GET['type'])?'active':''; ?>"><i class="fa-solid fa-layer-group"></i> All Files</a>
 					<?php foreach ($filter_groups as $g_name => $g_exts):
 						$g_types_str = implode(',', $g_exts);
 						$g_icon = 'fa-wand-magic-sparkles';
 						switch($g_name) {
-							case '3D': $g_icon = 'fa-cube'; break;
-							case 'Images': $g_icon = 'fa-image'; break;
-							case 'Video': $g_icon = 'fa-film'; break;
-							case 'Audio': $g_icon = 'fa-music'; break;
-							case 'Code': $g_icon = 'fa-code'; break;
-							case 'Documents': $g_icon = 'fa-file-lines'; break;
+							case '3D': $g_icon = 'fa-cube'; $description = '🎯 Explore stunning 3D Models (GLB, GLTF, OBJ, FBX) - Interactive 3D assets that bring your world to life!'; break;
+							case 'Images': $g_icon = 'fa-image'; $description = '🎨 Discover all Image Files (JPG, PNG, GIF, WebP, SVG, HEIC, AVIF, TIFF) - Every format, every visual!'; break;
+							case 'Video': $g_icon = 'fa-film'; $description = '🎬 Play all Video Files (MP4, WebM, MOV, MKV, AVI, FLV, WMV) - Cinema quality at your fingertips!'; break;
+							case 'Audio': $g_icon = 'fa-music'; $description = '🎵 Stream all Audio Files (MP3, WAV, OGG, FLAC, AAC, M4A, Opus) - Feel the beat, every format!'; break;
+							case 'Code': $g_icon = 'fa-code'; $description = '💻 Master all Code Files (JS, TS, HTML, CSS, PHP, JSON, XML, MD) - Code like a pro!'; break;
+							case 'Documents': $g_icon = 'fa-file-lines'; $description = '📄 Access all Document Files (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX) - Business at your command!'; break;
 						}
 					?>
-						<a href="<?php echo $mkLink(null, $g_types_str); ?>" class="nav-link <?php echo (isset($_GET['type']) && $_GET['type'] === $g_types_str)?'active':''; ?>"><i class="fa-solid <?php echo $g_icon; ?>"></i> <?php echo $g_name; ?></a>
+						<a href="<?php echo $mkLink(['type'=>$g_types_str, 'page'=>1]); ?>" class="nav-link <?php echo (isset($_GET['type']) && $_GET['type'] === $g_types_str)?'active':''; ?>" title="<?php echo $description; ?>" aria-label="Filter assets by <?php echo $g_name; ?>"><i class="fa-solid <?php echo $g_icon; ?>"></i> <?php echo $g_name; ?></a>
 					<?php endforeach; ?>
 				</nav>
 			</aside>
@@ -451,20 +471,26 @@
 
 				<div class="view-header">
 					<div class="breadcrumbs">
-						<a href="<?php echo $mkLink('', null, $defaultHex); ?>"><i class="fa-solid fa-house-chimney"></i> Root</a>
+						<a href="<?php echo $mkLink(['view'=>null, 'page'=>1]); ?>"><i class="fa-solid fa-house-chimney"></i> Root</a>
 						<?php foreach ($ui_breadcrumbs as $crumb_node): ?>
-							<span class="sep">/</span><a href="<?php echo $mkLink($crumb_node['path']); ?>"><?php echo $crumb_node['name']; ?></a>
+							<span class="sep">/</span><a href="<?php echo $mkLink(['view'=>$crumb_node['path'], 'page'=>1]); ?>"><?php echo $crumb_node['name']; ?></a>
 						<?php endforeach; ?>
 					</div>
 				</div>
 
 				<div class="asset-grid" id="assetGrid">
-					<?php foreach ($currentItems as $idx => $a_item):
+					<?php
+					if(empty($paged_items)): ?>
+						<div style="grid-column: 1/-1; text-align:center; padding: 2rem; color: var(--text_dim);">No items found.</div>
+					<?php endif;
+					foreach ($paged_items as $idx => $a_item):
 						$a_ext = $a_item['extension'];
 						$is_a_dir = $a_item['type'] === 'dir';
 						$is_a_image = in_array($a_ext, ['jpg','jpeg','png','gif','webp','svg']);
 						$a_b64 = base64_encode(json_encode($a_item));
-						$a_click = $is_a_dir ? "window.location.href='" . $mkLink($a_item['relative_path'], null, stringToColor($a_item['filename'])) . "'" : "openViewer(this)";
+						$a_click = $is_a_dir
+							? "window.location.href='" . $mkLink(['view'=>$a_item['relative_path'], 'page'=>1]) . "'"
+							: "openViewer(this)";
 					?>
 					<div class="card interactive-card" data-b64="<?php echo $a_b64; ?>" data-name="<?php echo strtolower($a_item['filename']); ?>" onclick="<?php echo $a_click; ?>" style="--delay: <?php echo $idx * 0.05; ?>s">
 						<?php if(!$is_a_dir): ?><div class="badge"><?php echo $a_ext; ?></div><?php endif; ?>
@@ -475,9 +501,13 @@
 								<?php else: ?>
 									<div class="fallback-icon"><?php
 										if($is_a_dir) echo '<i class="fa-solid fa-folder-closed"></i>';
-										elseif(in_array($a_ext, ['glb','gltf'])) echo '<i class="fa-solid fa-cube"></i>';
-										elseif(in_array($a_ext, ['mp4','mov','webm'])) echo '<i class="fa-solid fa-film"></i>';
-										elseif(in_array($a_ext, ['mp3','wav'])) echo '<i class="fa-solid fa-music"></i>';
+										elseif(in_array($a_ext, ['glb','gltf','obj','fbx'])) echo '<i class="fa-solid fa-cube"></i>';
+										elseif(in_array($a_ext, ['mp4', 'webm', 'mov', 'mkv','m4v', 'avi', 'flv', 'wmv', 'mts', 'ts', 'ogv', 'vp9'])) echo '<i class="fa-solid fa-film"></i>';
+										elseif(in_array($a_ext, ['mp3','wav','ogg','flac','aac','m4a','opus','weba'])) echo '<i class="fa-solid fa-music"></i>';
+										elseif(in_array($a_ext, ['js','ts','jsx','tsx','html','css','scss','sass','json','xml','php','txt','md','yml'])) echo '<i class="fa-solid fa-code"></i>';
+										elseif(in_array($a_ext, ['pdf','doc','docx','xls','xlsx','ppt','pptx'])) echo '<i class="fa-solid fa-file-lines"></i>';
+										elseif(in_array($a_ext, ['zip','rar','7z','tar','gz'])) echo '<i class="fa-solid fa-file-zipper"></i>';
+										elseif(in_array($a_ext, ['exe','msi','dmg'])) echo '<i class="fa-solid fa-computer"></i>';
 										else echo '<i class="fa-solid fa-file-lines"></i>';
 									?></div>
 								<?php endif; ?>
@@ -491,6 +521,20 @@
 					<?php endforeach; ?>
 				</div>
 
+				<!-- PAGINATION CONTROLS -->
+				<?php if ($total_pages > 1): ?>
+				<div class="pagination-container">
+					<div class="page-info">
+						Showing <?php echo $offset + 1; ?>-<?php echo min($offset + $limit, $total_items); ?> of <?php echo $total_items; ?>
+					</div>
+					<div class="page-controls">
+						<a href="<?php echo ($page > 1) ? $mkLink(['page'=>$page-1,'limit'=>$limit]) : '#'; ?>" class="btn <?php echo ($page <= 1) ? 'disabled' : ''; ?>"><i class="fa-solid fa-chevron-left"></i></a>
+						<span class="current-page"><?php echo $page; ?> / <?php echo $total_pages; ?></span>
+						<a href="<?php echo ($page < $total_pages) ? $mkLink(['page'=>$page+1,'limit'=>$limit]) : '#'; ?>" class="btn <?php echo ($page >= $total_pages) ? 'disabled' : ''; ?>"><i class="fa-solid fa-chevron-right"></i></a>
+					</div>
+				</div>
+				<?php endif; ?>
+
 				<footer role="contentinfo">
 					<nav aria-label="Social Media Navigation">
 						<ul class="socials">
@@ -502,6 +546,7 @@
 							<li> <a href="mailto:mail@julibe.com" title="Send a good old digital email to Julibe 📧" aria-label="Send Email to Julibe" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#de4138; --c-text:#ffffff; --c-high:#edba1c;"> <span class="icon fa fa-solid fa-envelope"></span> <span class="title">Email</span> </a> </li>
 						</ul>
 					</nav>
+					<p style="margin-top:1rem; font-size:0.8rem; color: var(--text_dim);">© <?php echo $current_year; ?> <?php echo $appName; ?>. All rights reserved. Crafted with ❤️ by Julibe.</p>
 				</footer>
 			</main>
 		</div>
@@ -542,8 +587,10 @@
 		} else {
 			$gather_items = scanDirectory($scan_target, $base_assets_path, $script_dir_abs, $base_url_root, $allowed_extensions, false);
 		}
-		renderHtml($gather_items, $current_api_url, $current_relative_view, $is_virtual_root, $ui_color, $accent_glow_rgba, $accent_border_rgba, $selection_bg_rgba, $default_accent, $appName, $appDesc);
+		// Pass paging data + date variables to the HTML renderer
+		renderHtml($gather_items, $current_api_url, $current_relative_view, $is_virtual_root, $ui_color, $accent_glow_rgba, $accent_border_rgba, $selection_bg_rgba, $default_accent, $appName, $appDesc, $current_page, $items_per_page, $current_year, $meta_date_simple, $meta_date_iso, $meta_date_exp);
 	} else {
+		// API Renders full tree (No Pagination)
 		$api_tree = [];
 		if ($is_virtual_root) {
 			foreach($valid_roots as $root_node) {
