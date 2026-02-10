@@ -374,7 +374,8 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
 
 		<script type="module" src="https://unpkg.com/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
-
+		<script src="https://unpkg.com/exifreader@4.12.0/dist/exif-reader.min.js"></script>
+		<script src="https://unpkg.com/wavesurfer.js@7"></script>
 		<style>
 			:root {
 				--accent: #<?php echo $hexColor; ?>;
