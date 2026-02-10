@@ -1,6 +1,6 @@
 # Omnex | The Asset Explorer. Everything. Accounted for.
 
-**Omnex** is a high-performance, glassmorphic command center designed for the logical management and visual exploration of project assets. Developed with ❤️ by **Julibe**, it transforms raw directory structures into an interactive, 3D-accelerated ecosystem.
+**Omnex** is a high-performance,  command center designed for the logical management and visual exploration of project assets. Developed with ❤️ by **Julibe**, it transforms raw directory structures into an interactive, 3D-accelerated ecosystem.
 
 ## 🚀 Vision
 In modern development, assets often become a chaotic void. Omnex ensures that every file is not just stored, but is **accounted for**. By leveraging deterministic logic and atmospheric UI states, it provides a professional-grade interface for designers and developers to interact with their media vaults.

@@ -58,7 +58,8 @@
 	$default_accent = 'd946ef';
 	$appName = 'Omnex';
 	$appDesc = 'The Asset Explorer where everything is accounted for';
-
+	$appKeys = [$appName, 'Julibe', 'Love','asset explorer', 'file manager', 'media library', 'digital vault', 'content tracker', 'resource hub', 'data organizer', 'file catalog', 'asset dashboard'];
+	$appInfo = $appName . ' is here to help you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe.';
 	// --- DYNAMIC UI THEME ENGINE ---
 	$ui_color = $_GET['color'] ?? $default_accent;
 
@@ -240,7 +241,7 @@
 	}
 
 	// --- UI COMPONENT RENDERER ---
-	function renderHtml($currentItems, $apiUrl, $currentRelPath, $isVirtual, $hexColor, $glowRgba, $borderRgba, $selectRgba, $defaultHex, $appName, $appDesc, $page, $limit, $current_year, $meta_date_simple, $meta_date_iso, $meta_date_exp) {
+	function renderHtml($currentItems, $apiUrl, $currentRelPath, $isVirtual, $hexColor, $glowRgba, $borderRgba, $selectRgba, $defaultHex, $appName, $appDesc, $appInfo, $appKeys, $page, $limit, $current_year, $meta_date_simple, $meta_date_iso, $meta_date_exp) {
 
 		usort($currentItems, function($a_node, $b_node) {
 			if ($a_node['type'] !== $b_node['type']) return $a_node['type'] === 'dir' ? -1 : 1;
@@ -312,8 +313,8 @@
 		<meta http-equiv="X-Content-Type-Options" content="nosniff">
 		<meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
 		<meta http-equiv="X-XSS-Protection" content="1; mode=block">
-		<meta name="description" content="<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe">
-		<meta name="keywords" content="apps, coding life, css3, cssdaily, dashboard, dashboard design, exchangerate api, fontawesome, frontend, glassmorphism, google apps script, google material icons, html5, java script, javascript, julibe, localstorage, minimalist, open source, openweathermap api, pixellab, productivity, productivity tools, startpage, uiux, web development, webos, widgets, Julibe, Amazing, Designer">
+		<meta name="description" content="<?php echo $appInfo;?>">
+		<meta name="keywords" content="<?php echo implode(',', $appKeys); ?>">
 		<meta name="author" content="Julibe">
 		<meta name="robots" content="index, follow">
 		<meta name="googlebot" content="index, follow">
@@ -327,7 +328,7 @@
 		<meta name="location.country" content="US">
 		<meta property="og:site_name" content="<?php echo $appName; ?>">
 		<meta property="og:title" content="<?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️">
-		<meta property="og:description" content="<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe">
+		<meta property="og:description" content="<?php echo $appInfo;?>">
 		<meta property="og:type" content="website">
 		<meta property="og:locale" content="en_US">
 		<meta property="og:url" content="./">
@@ -338,7 +339,7 @@
 		<meta property="og:country-name" content="US">
 		<meta property="al:web:url" content="./">
 		<meta name="twitter:title" content="<?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️">
-		<meta name="twitter:description" content="<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe">
+		<meta name="twitter:description" content="<?php echo $appInfo;?>">
 		<meta name="twitter:site" content="@julibe">
 		<meta name="twitter:creator" content="@julibe">
 		<meta name="twitter:url" content="./">
@@ -356,14 +357,14 @@
 		<meta name="msapplication-TileImage" content="./media/icon.webp">
 		<meta name="msapplication-config" content="none">
 		<meta name="msapplication-navbutton-color" content="#171420">
-		<meta name="msapplication-tooltip" content="<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe">
+		<meta name="msapplication-tooltip" content="<?php echo $appInfo;?>">
 		<meta name="msapplication-starturl" content="./">
 		<meta name="datacite.creator" content="Julibe">
 		<meta name="datacite.title" content="<?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️">
 		<meta name="datacite.publisher" content="Julibe">
 		<meta name="datacite.resourceType" content="InteractiveResource">
-		<meta name="datacite.subject" content="apps, coding life, css3, cssdaily, dashboard, dashboard design, exchangerate api, fontawesome, frontend, glassmorphism, google apps script, google material icons, html5, java script, javascript, julibe, localstorage, minimalist, open source, openweathermap api, pixellab, productivity, productivity tools, startpage, uiux, web development, webos, widgets, Julibe, Amazing, Designer">
-		<meta name="datacite.description" content="<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe">
+		<meta name="datacite.subject" content="<?php echo implode(',', $appKeys); ?>">
+		<meta name="datacite.description" content="<?php echo $appInfo;?>">
 		<meta name="datacite.language" content="en">
 		<meta name="datacite.url" content="./">
 
@@ -383,7 +384,7 @@
 		<script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "v20xjtjk1h");</script>
 		<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"0948b735ca7842359091b2bd8fdefb54"}'></script>
 		<script>const firebaseConfig={"apiKey":"AIzaSyDhRbFy9m-NXZVkozYJwKdDYJuwsL6W_bw","authDomain":"pushnotificationsio.firebaseapp.com","databaseURL":"https:\/\/pushnotificationsio.firebaseio.com","projectId":"pushnotificationsio","storageBucket":"pushnotificationsio.appspot.com","messagingSenderId":"788493704860","appId":"1:788493704860:web:ba71fd692e7cc9651f5759","measurementId":"G-NXS0Z75BCH"};</script>
-		<script type="application/ld+json">{ "@context": "https://schema.org", "@type": "WebSite", "name": "<?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️", "url": "./", "description": "<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe", "author": { "@type": "Person", "name": "Julibe" }, "image": "https://apps.julibe.com/media/vexom/./media/vexom/none-image.webp", "dateCreated": "<?php echo $meta_date_simple; ?>", "dateModified": "<?php echo $meta_date_simple; ?>", "inLanguage": "en"}</script>
+		<script type="application/ld+json">{ "@context": "https://schema.org", "@type": "WebSite", "name": "<?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️", "url": "./", "description": "<?php echo $appInfo;?>", "author": { "@type": "Person", "name": "Julibe" }, "image": "https://apps.julibe.com/media/vexom/./media/vexom/none-image.webp", "dateCreated": "<?php echo $meta_date_simple; ?>", "dateModified": "<?php echo $meta_date_simple; ?>", "inLanguage": "en"}</script>
 
 		<link rel="stylesheet" href="styles/styles.css">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -588,7 +589,7 @@
 			$gather_items = scanDirectory($scan_target, $base_assets_path, $script_dir_abs, $base_url_root, $allowed_extensions, false);
 		}
 		// Pass paging data + date variables to the HTML renderer
-		renderHtml($gather_items, $current_api_url, $current_relative_view, $is_virtual_root, $ui_color, $accent_glow_rgba, $accent_border_rgba, $selection_bg_rgba, $default_accent, $appName, $appDesc, $current_page, $items_per_page, $current_year, $meta_date_simple, $meta_date_iso, $meta_date_exp);
+		renderHtml($gather_items, $current_api_url, $current_relative_view, $is_virtual_root, $ui_color, $accent_glow_rgba, $accent_border_rgba, $selection_bg_rgba, $default_accent, $appName, $appDesc, $appInfo, $appKeys, $current_page, $items_per_page, $current_year, $meta_date_simple, $meta_date_iso, $meta_date_exp);
 	} else {
 		// API Renders full tree (No Pagination)
 		$api_tree = [];
