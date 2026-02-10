@@ -1,8 +1,9 @@
 <?php
 	/*
 		* ----------------------------------------------------------------------------
-		* Omnex - The Asset Explorer. Everything. Accounted for.
+		* Omnex - The Asset Explorer where everything is accounted for
 		* ----------------------------------------------------------------------------
+		* Version: 4.1.2
 		* Description:
 		* Omnex is a modern, intuitive asset management system built to explore, track,
 		* and understand all your assets in one place. With support for multiple file
@@ -27,11 +28,12 @@
 		* ----------------------------------------------------------------------------
 	*/
 
-
 	// --- CONFIGURATION ---
 	$assets_dir_name = 'Assets';
 	$default_format = 'html';
 	$default_accent = 'd946ef';
+	$appName = 'Omnex';
+	$appDesc = 'The Asset Explorer where everything is accounted for';
 
 	// --- DYNAMIC UI THEME ENGINE ---
 	$ui_color = $_GET['color'] ?? $default_accent;
@@ -166,11 +168,9 @@
 
 				$item_abs_path = $abs_path . DIRECTORY_SEPARATOR . $f_item;
 
-				// Logic: Relative path for navigation
 				$item_rel_to_assets = substr($item_abs_path, strlen($base_assets_path));
 				$item_rel_to_assets = ltrim(str_replace('\\', '/', $item_rel_to_assets), '/');
 
-				// Logic: Web URL for asset loading
 				$item_rel_to_script = substr($item_abs_path, strlen($script_dir_abs));
 				$item_rel_to_script = ltrim(str_replace('\\', '/', $item_rel_to_script), '/');
 				$item_web_url = $base_url_root . '/' . $item_rel_to_script;
@@ -231,7 +231,7 @@
 	}
 
 	// --- UI COMPONENT RENDERER ---
-	function renderHtml($currentItems, $apiUrl, $currentRelPath, $isVirtual, $hexColor, $glowRgba, $borderRgba, $selectRgba, $defaultHex) {
+	function renderHtml($currentItems, $apiUrl, $currentRelPath, $isVirtual, $hexColor, $glowRgba, $borderRgba, $selectRgba, $defaultHex, $appName, $appDesc) {
 		usort($currentItems, function($a_node, $b_node) {
 			if ($a_node['type'] !== $b_node['type']) return $a_node['type'] === 'dir' ? -1 : 1;
 			return strnatcasecmp($a_node['filename'], $b_node['filename']);
@@ -255,27 +255,35 @@
 			return '?' . http_build_query($url_q);
 		};
 
+		$mkApiLink = function($link_format) use ($apiUrl) {
+			$url_q = $_GET;
+			$url_q['format'] = $link_format;
+			return $apiUrl . '?' . http_build_query($url_q);
+		};
+
 		$filter_groups = [
 			'3D' => ['glb','gltf','obj','fbx'],
 			'Images' => ['jpg','jpeg','png','gif','webp','svg'],
 			'Video' => ['mp4','webm','mov','mkv'],
-			'Audio' => ['mp3','wav','ogg']
+			'Audio' => ['mp3','wav','ogg'],
+			'Code' => ['js','ts','jsx','tsx','html','css','scss','sass','json','xml'],
+			'Documents' => ['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','md']
 		];
 	?>
 	<!DOCTYPE html>
 	<html lang="en">
 	<head>
-		<title>Omnex | The Asset Explorer. Everything. Accounted for. | By Julibe ❤️</title>
+		<title><?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️</title>
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
 		<meta charset="UTF-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 		<base href="./">
-		<meta property="name" content="Omnex">
-		<meta name="name" content="Omnex">
+		<meta property="name" content="<?php echo $appName; ?>">
+		<meta name="name" content="<?php echo $appName; ?>">
 		<meta name="theme-color" content="#171420">
 		<meta name="mobile-web-app-capable" content="yes">
-		<meta name="application-name" content="Omnex">
+		<meta name="application-name" content="<?php echo $appName; ?>">
 		<link rel="manifest" href="./manifest.json">
 		<link rel="shortcut icon" href="./media/icon.webp">
 		<link rel="icon" type="image/png" href="./media/icon.webp">
@@ -283,7 +291,7 @@
 		<meta http-equiv="X-Content-Type-Options" content="nosniff">
 		<meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
 		<meta http-equiv="X-XSS-Protection" content="1; mode=block">
-		<meta name="description" content="Omnex helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe">
+		<meta name="description" content="<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe">
 		<meta name="keywords" content="apps, coding life, css3, cssdaily, dashboard, dashboard design, exchangerate api, fontawesome, frontend, glassmorphism, google apps script, google material icons, html5, java script, javascript, julibe, localstorage, minimalist, open source, openweathermap api, pixellab, productivity, productivity tools, startpage, uiux, web development, webos, widgets, Julibe, Amazing, Designer">
 		<meta name="author" content="Julibe">
 		<meta name="copyright" content="2026">
@@ -299,23 +307,23 @@
 		<link rel="alternate" href="https://julibe.com/" hreflang="x-default">
 		<meta name="p:domain_verify" content="194c03ce4137043917b6eeafb295fcbb">
 		<meta name="location.country" content="US">
-		<meta property="og:site_name" content="Omnex">
-		<meta property="og:title" content="Omnex | The Asset Explorer. Everything. Accounted for. | By Julibe ❤️">
-		<meta property="og:description" content="Omnex helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe">
+		<meta property="og:site_name" content="<?php echo $appName; ?>">
+		<meta property="og:title" content="<?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️">
+		<meta property="og:description" content="<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe">
 		<meta property="og:type" content="website">
 		<meta property="og:locale" content="en_US">
 		<meta property="og:url" content="./">
 		<meta property="og:image" content="https://apps.julibe.com/media/vexom/./media/vexom/none-image.webp">
 		<meta property="og:image:secure_url" content="https://apps.julibe.com/media/vexom/./media/vexom/none-image.webp">
-		<meta property="og:image:alt" content="Omnex helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today.">
+		<meta property="og:image:alt" content="<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today.">
 		<meta property="article:published_time" content="2026-02-01T01:41:00-05:00">
 		<meta property="article:modified_time" content="2026-02-01T01:41:00-05:00">
 		<meta property="article:expiration_time" content="2027-02-10T00:00:00-05:00">
 		<meta property="og:email" content="mail@julibe.com">
 		<meta property="og:country-name" content="US">
 		<meta property="al:web:url" content="./">
-		<meta name="twitter:title" content="Omnex | The Asset Explorer. Everything. Accounted for. | By Julibe ❤️">
-		<meta name="twitter:description" content="Omnex helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe">
+		<meta name="twitter:title" content="<?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️">
+		<meta name="twitter:description" content="<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe">
 		<meta name="twitter:site" content="@julibe">
 		<meta name="twitter:creator" content="@julibe">
 		<meta name="twitter:url" content="./">
@@ -323,38 +331,48 @@
 		<meta name="twitter:card" content="summary_large_image">
 		<meta name="twitter:image" content="https://apps.julibe.com/media/vexom/./media/vexom/none-image.webp">
 		<meta name="twitter:image:src" content="https://apps.julibe.com/media/vexom/./media/vexom/none-image.webp">
-		<meta name="twitter:image:alt" content="Omnex helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today.">
+		<meta name="twitter:image:alt" content="<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today.">
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="default">
-		<meta name="apple-mobile-web-app-title" content="Omnex">
+		<meta name="apple-mobile-web-app-title" content="<?php echo $appName; ?>">
 		<link rel="apple-touch-icon" href="./media/icon.webp">
 		<link rel="apple-touch-startup-image" href="https://apps.julibe.com/media/vexom/./media/vexom/none-image.webp">
 		<meta name="msapplication-TileColor" content="#171420">
 		<meta name="msapplication-TileImage" content="./media/icon.webp">
 		<meta name="msapplication-config" content="none">
 		<meta name="msapplication-navbutton-color" content="#171420">
-		<meta name="msapplication-tooltip" content="Omnex helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe">
+		<meta name="msapplication-tooltip" content="<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe">
 		<meta name="msapplication-starturl" content="./">
 		<meta name="datacite.creator" content="Julibe">
-		<meta name="datacite.title" content="Omnex | The Asset Explorer. Everything. Accounted for. | By Julibe ❤️">
+		<meta name="datacite.title" content="<?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️">
 		<meta name="datacite.publisher" content="Julibe">
 		<meta name="datacite.publicationYear" content="2026">
 		<meta name="datacite.resourceType" content="InteractiveResource">
 		<meta name="datacite.subject" content="apps, coding life, css3, cssdaily, dashboard, dashboard design, exchangerate api, fontawesome, frontend, glassmorphism, google apps script, google material icons, html5, java script, javascript, julibe, localstorage, minimalist, open source, openweathermap api, pixellab, productivity, productivity tools, startpage, uiux, web development, webos, widgets, Julibe, Amazing, Designer">
-		<meta name="datacite.description" content="Omnex helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe">
+		<meta name="datacite.description" content="<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe">
 		<meta name="datacite.language" content="en">
 		<meta name="datacite.url" content="./">
 		<meta name="datacite.dateIssued" content="2026-02-01">
+
 		<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-TFV56799');</script>
 		<script async src="https://www.googletagmanager.com/gtag/js?id=G-416Q6HW7MT"></script>
 		<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-416Q6HW7MT');</script>
 		<script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "v20xjtjk1h");</script>
 		<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"0948b735ca7842359091b2bd8fdefb54"}'></script>
 		<script>const firebaseConfig={"apiKey":"AIzaSyDhRbFy9m-NXZVkozYJwKdDYJuwsL6W_bw","authDomain":"pushnotificationsio.firebaseapp.com","databaseURL":"https:\/\/pushnotificationsio.firebaseio.com","projectId":"pushnotificationsio","storageBucket":"pushnotificationsio.appspot.com","messagingSenderId":"788493704860","appId":"1:788493704860:web:ba71fd692e7cc9651f5759","measurementId":"G-NXS0Z75BCH"};</script>
-		<script type="application/ld+json">{ "@context": "https://schema.org", "@type": "WebSite", "name": "Omnex | The Asset Explorer. Everything. Accounted for. | By Julibe ❤️", "url": "./", "description": "Omnex helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe", "author": { "@type": "Person", "name": "Julibe" }, "image": "https://apps.julibe.com/media/vexom/./media/vexom/none-image.webp", "dateCreated": "2026-02-01", "dateModified": "2026-02-01", "inLanguage": "en"}</script>
+		<script type="application/ld+json">{ "@context": "https://schema.org", "@type": "WebSite", "name": "<?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️", "url": "./", "description": "<?php echo $appName; ?> helps you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe", "author": { "@type": "Person", "name": "Julibe" }, "image": "https://apps.julibe.com/media/vexom/./media/vexom/none-image.webp", "dateCreated": "2026-02-01", "dateModified": "2026-02-01", "inLanguage": "en"}</script>
 
 		<link rel="stylesheet" href="styles/styles.css">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+
 		<script type="module" src="https://unpkg.com/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
 
 		<style>
@@ -364,6 +382,7 @@
 				--accent_border: <?php echo $borderRgba; ?>;
 				--selection_bg: <?php echo $selectRgba; ?>;
 			}
+			.token.keyword, .token.selector, .token.attr-name { color: var(--accent) !important; }
 		</style>
 	</head>
 	<body>
@@ -373,8 +392,8 @@
 				<div class="user-profile">
 					<div class="avatar"><i class="fa-solid fa-boxes-stacked"></i></div>
 					<div class="info">
-						<span class="name">Omnex Explorer</span>
-						<span class="email">System Active</span>
+						<span class="name"><?php echo $appName; ?></span>
+						<span class="slogan"><?php echo $appDesc; ?></span>
 					</div>
 				</div>
 				<nav class="nav-section">
@@ -407,6 +426,8 @@
 							case 'Images': $g_icon = 'fa-image'; break;
 							case 'Video': $g_icon = 'fa-film'; break;
 							case 'Audio': $g_icon = 'fa-music'; break;
+							case 'Code': $g_icon = 'fa-code'; break;
+							case 'Documents': $g_icon = 'fa-file-lines'; break;
 						}
 					?>
 						<a href="<?php echo $mkLink(null, $g_types_str); ?>" class="nav-link <?php echo (isset($_GET['type']) && $_GET['type'] === $g_types_str)?'active':''; ?>"><i class="fa-solid <?php echo $g_icon; ?>"></i> <?php echo $g_name; ?></a>
@@ -417,12 +438,17 @@
 			<main class="content-area">
 				<header class="main-header">
 					<div class="brand-group">
-						<h1><i class="fa-solid fa-boxes-stacked" style="color:var(--accent); margin-right:8px;"></i>Omnex</h1>
-						<p class="slogan">The Asset Explorer. Everything. Accounted for.</p>
+						<h1><i class="fa-solid fa-boxes-stacked" style="color:var(--accent); margin-right:8px;"></i><?php echo $appName; ?></h1>
+						<p class="slogan"><?php echo $appDesc; ?></p>
 					</div>
 					<div class="search-box">
 						<span class="icon"><i class="fa-solid fa-magnifying-glass"></i></span>
 						<input type="text" id="assetSearch" placeholder="Search Assets..." onkeyup="filterGrid()">
+					</div>
+					<div class="api-controls">
+						<a href="<?php echo $mkApiLink('json'); ?>" target="_blank" class="btn">{ JSON }</a>
+						<a href="<?php echo $mkApiLink('xml'); ?>" target="_blank" class="btn">&lt; XML &gt;</a>
+						<a href="<?php echo $mkApiLink('csv'); ?>" target="_blank" class="btn">[ CSV ]</a>
 					</div>
 				</header>
 
@@ -471,10 +497,13 @@
 				<footer role="contentinfo">
 					<nav aria-label="Social Media Navigation">
 						<ul class="socials">
-							<li> <a href="http://julibe.com/" title="Portfolio👻" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#7139d2ff; --c-text:#ffffff; --c-high:#ee355e;" > <span class="icon fa fa-solid fa-globe"></span> <span class="title">Portfolio</span> </a> </li>
-							<li> <a href="http://julibe.com/github" title="Explore Code" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#625b68ff; --c-text:#ffffff; --c-high:#6b1ed0ff;" > <span class="icon fa-brands fa-github"></span> <span class="title">GitHub</span> </a> </li>
-							<li> <a href="mailto:mail@julibe.com" title="Email📧" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#de4138; --c-text:#ffffff; --c-high:#edba1c;"> <span class="icon fa fa-solid fa-envelope"></span> <span class="title">Email</span> </a> </li>
-						</ul>
+                        <li> <a href="http://julibe.com/" title="Enter Julibe’s awesome realm 👻" aria-label="Visit Julibe's Portfolio" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#7139d2ff; --c-text:#ffffff; --c-high:#ee355e;" > <span class="icon fa fa-solid fa-globe"></span> <span class="title">Portfolio</span> </a> </li>
+                        <li> <a href="http://julibe.com/github" title="“Copy… Argh! 🏴‍☠️” I mean, explore Julibe’s code" aria-label="Julibe's GitHub" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#625b68ff; --c-text:#ffffff; --c-high:#6b1ed0ff;" > <span class="icon fa-brands fa-github"></span> <span class="title">GitHub</span> </a> </li>
+                        <li> <a href="http://julibe.com/whatsapp" title="💬 Message Julibe and say hi or just Boo!" aria-label="Contact Julibe via WhatsApp" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#25d366; --c-text:#ffffff; --c-high:#30676a;" > <span class="icon fa-brands fa-whatsapp"></span> <span class="title">WhatsApp</span> </a> </li>
+                        <li> <a href="http://julibe.com/twitter" title="Get some of Julibe's thoughts, pixels, and the occasional rant 🐦" aria-label="Follow Julibe on Twitter" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#1da1f2; --c-text:#ffffff; --c-high:#1da1f2;" > <span class="icon fa-brands fa-twitter"></span> <span class="title">X (Twitter)</span> </a> </li>
+                        <li> <a href="http://julibe.com/instagram" title="Peek behind the scenes of Julibe’s creative stuff 📸" aria-label="Follow Julibe on Instagram" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#e1306c; --c-text:#ffffff; --c-high:#e1306c;" > <span class="icon fa-brands fa-instagram"></span> <span class="title">Instagram</span> </a> </li>
+                        <li> <a href="mailto:mail@julibe.com" title="Send a good old digital email to Julibe 📧" aria-label="Send Email to Julibe" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#de4138; --c-text:#ffffff; --c-high:#edba1c;"> <span class="icon fa fa-solid fa-envelope"></span> <span class="title">Email</span> </a> </li>
+                    </ul>
 					</nav>
 				</footer>
 			</main>
@@ -498,9 +527,8 @@
 	</body>
 	</html>
 	<?php
-	} // End renderHtml
+	}
 
-	// --- MAIN EXECUTION PIPELINE ---
 	if ($is_html_mode) {
 		$gather_items = [];
 		if ($is_virtual_root) {
@@ -517,7 +545,7 @@
 		} else {
 			$gather_items = scanDirectory($scan_target, $base_assets_path, $script_dir_abs, $base_url_root, $allowed_extensions, false);
 		}
-		renderHtml($gather_items, $current_api_url, $current_relative_view, $is_virtual_root, $ui_color, $accent_glow_rgba, $accent_border_rgba, $selection_bg_rgba, $default_accent);
+		renderHtml($gather_items, $current_api_url, $current_relative_view, $is_virtual_root, $ui_color, $accent_glow_rgba, $accent_border_rgba, $selection_bg_rgba, $default_accent, $appName, $appDesc);
 	} else {
 		$api_tree = [];
 		if ($is_virtual_root) {
