@@ -437,18 +437,14 @@
 
 			<main class="content-area">
 				<header class="main-header">
-					<div class="brand-group">
-						<h1><i class="fa-solid fa-boxes-stacked" style="color:var(--accent); margin-right:8px;"></i><?php echo $appName; ?></h1>
-						<p class="slogan"><?php echo $appDesc; ?></p>
-					</div>
 					<div class="search-box">
 						<span class="icon"><i class="fa-solid fa-magnifying-glass"></i></span>
 						<input type="text" id="assetSearch" placeholder="Search Assets..." onkeyup="filterGrid()">
 					</div>
 					<div class="api-controls">
-						<a href="<?php echo $mkApiLink('json'); ?>" target="_blank" class="btn">{ JSON }</a>
-						<a href="<?php echo $mkApiLink('xml'); ?>" target="_blank" class="btn">&lt; XML &gt;</a>
-						<a href="<?php echo $mkApiLink('csv'); ?>" target="_blank" class="btn">[ CSV ]</a>
+						<a href="<?php echo $mkApiLink('json'); ?>" target="_blank" class="btn">{JSON}</a>
+						<a href="<?php echo $mkApiLink('xml'); ?>" target="_blank" class="btn">&lt;XML&gt;</a>
+						<a href="<?php echo $mkApiLink('csv'); ?>" target="_blank" class="btn">[CSV]</a>
 					</div>
 				</header>
 
@@ -497,13 +493,13 @@
 				<footer role="contentinfo">
 					<nav aria-label="Social Media Navigation">
 						<ul class="socials">
-                        <li> <a href="http://julibe.com/" title="Enter Julibe’s awesome realm 👻" aria-label="Visit Julibe's Portfolio" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#7139d2ff; --c-text:#ffffff; --c-high:#ee355e;" > <span class="icon fa fa-solid fa-globe"></span> <span class="title">Portfolio</span> </a> </li>
-                        <li> <a href="http://julibe.com/github" title="“Copy… Argh! 🏴‍☠️” I mean, explore Julibe’s code" aria-label="Julibe's GitHub" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#625b68ff; --c-text:#ffffff; --c-high:#6b1ed0ff;" > <span class="icon fa-brands fa-github"></span> <span class="title">GitHub</span> </a> </li>
-                        <li> <a href="http://julibe.com/whatsapp" title="💬 Message Julibe and say hi or just Boo!" aria-label="Contact Julibe via WhatsApp" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#25d366; --c-text:#ffffff; --c-high:#30676a;" > <span class="icon fa-brands fa-whatsapp"></span> <span class="title">WhatsApp</span> </a> </li>
-                        <li> <a href="http://julibe.com/twitter" title="Get some of Julibe's thoughts, pixels, and the occasional rant 🐦" aria-label="Follow Julibe on Twitter" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#1da1f2; --c-text:#ffffff; --c-high:#1da1f2;" > <span class="icon fa-brands fa-twitter"></span> <span class="title">X (Twitter)</span> </a> </li>
-                        <li> <a href="http://julibe.com/instagram" title="Peek behind the scenes of Julibe’s creative stuff 📸" aria-label="Follow Julibe on Instagram" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#e1306c; --c-text:#ffffff; --c-high:#e1306c;" > <span class="icon fa-brands fa-instagram"></span> <span class="title">Instagram</span> </a> </li>
-                        <li> <a href="mailto:mail@julibe.com" title="Send a good old digital email to Julibe 📧" aria-label="Send Email to Julibe" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#de4138; --c-text:#ffffff; --c-high:#edba1c;"> <span class="icon fa fa-solid fa-envelope"></span> <span class="title">Email</span> </a> </li>
-                    </ul>
+							<li> <a href="http://julibe.com/" title="Enter Julibe’s awesome realm 👻" aria-label="Visit Julibe's Portfolio" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#7139d2ff; --c-text:#ffffff; --c-high:#ee355e;" > <span class="icon fa fa-solid fa-globe"></span> <span class="title">Portfolio</span> </a> </li>
+							<li> <a href="http://julibe.com/github" title="“Copy… Argh! 🏴‍☠️” I mean, explore Julibe’s code" aria-label="Julibe's GitHub" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#625b68ff; --c-text:#ffffff; --c-high:#6b1ed0ff;" > <span class="icon fa-brands fa-github"></span> <span class="title">GitHub</span> </a> </li>
+							<li> <a href="http://julibe.com/whatsapp" title="💬 Message Julibe and say hi or just Boo!" aria-label="Contact Julibe via WhatsApp" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#25d366; --c-text:#ffffff; --c-high:#30676a;" > <span class="icon fa-brands fa-whatsapp"></span> <span class="title">WhatsApp</span> </a> </li>
+							<li> <a href="http://julibe.com/twitter" title="Get some of Julibe's thoughts, pixels, and the occasional rant 🐦" aria-label="Follow Julibe on Twitter" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#1da1f2; --c-text:#ffffff; --c-high:#1da1f2;" > <span class="icon fa-brands fa-twitter"></span> <span class="title">X (Twitter)</span> </a> </li>
+							<li> <a href="http://julibe.com/instagram" title="Peek behind the scenes of Julibe’s creative stuff 📸" aria-label="Follow Julibe on Instagram" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#e1306c; --c-text:#ffffff; --c-high:#e1306c;" > <span class="icon fa-brands fa-instagram"></span> <span class="title">Instagram</span> </a> </li>
+							<li> <a href="mailto:mail@julibe.com" title="Send a good old digital email to Julibe 📧" aria-label="Send Email to Julibe" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#de4138; --c-text:#ffffff; --c-high:#edba1c;"> <span class="icon fa fa-solid fa-envelope"></span> <span class="title">Email</span> </a> </li>
+						</ul>
 					</nav>
 				</footer>
 			</main>

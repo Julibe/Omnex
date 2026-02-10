@@ -11,31 +11,34 @@
 	--selection_bg: rgba(217, 70, 239, 0.3);
 }
 
+
+
+
 ::-webkit-scrollbar {
 	width: 10px;
 	background: var(--bg_deep);
-	&-thumb {
-		background: var(--bg_card);
-		border-radius: 10px;
-		border: 2px solid var(--bg_deep);
-		&:hover {
-			background: var(--accent);
-		}
+}
+
+::-webkit-scrollbar-thumb {
+	background: var(--accent);
+	border-radius: 10px;
+
+	&:hover {
+		background: var(--accent);
 	}
 }
 
 ::selection {
 	background: var(--selection_bg);
 	color: var(--text);
+	border: 2px solid var(--bg_deep);
 }
-
 * {
 	corner-shape: squircle;
 	box-sizing: border-box;
 	margin: 0;
 	padding: 0;
 }
-
 body {
 	font-family:
 		"Inter",
@@ -208,9 +211,6 @@ body {
 					display: flex;
 					gap: 8px;
 					.btn {
-						padding: 0.5rem 1rem;
-						font-size: 0.75rem;
-						font-family: monospace;
 						text-transform: uppercase;
 					}
 				}
@@ -407,7 +407,7 @@ body {
 }
 
 footer {
-	padding: 4rem 2rem;
+	padding: 1rem .5rem;
 	background: rgba(0, 0, 0, 0.2);
 	border-top: 1px solid var(--border);
 	margin-top: auto;
@@ -421,15 +421,18 @@ footer {
 			display: flex;
 			align-items: center;
 			gap: 10px;
-			padding: 12px 24px;
-			background: var(--c);
-			color: var(--c-text);
+			font-size: 12px;
+			padding: 6px 12px;
+			background: rgba(0, 0, 0, 0.2);
+			border: 1px solid var(--c);
+			color:  var(--c-dim);
 			text-decoration: none;
 			border-radius: 14px;
-			font-weight: 700;
+			font-weight: 300;
 			transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 			&:hover {
 				transform: translateY(-5px) scale(1.05);
+				background: var(--c);
 				box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 			}
 		}
@@ -491,8 +494,8 @@ footer {
 
 .btn {
 	background: var(--bg_card);
+	color: var(--accent);
 	border: 1px solid var(--border);
-	color: white;
 	padding: 0.6rem 1.2rem;
 	border-radius: 12px;
 	font-weight: 600;
@@ -506,11 +509,12 @@ footer {
 	&:hover {
 		background: var(--accent);
 		border-color: var(--accent);
+		color: var(--text);
 		box-shadow: 0 0 15px var(--accent_glow);
 	}
 	&.primary {
-		background: var(--accent);
-		border: none;
+		color: var(--text);
+		border: 1px solid var(--accent);
 	}
 }
 
