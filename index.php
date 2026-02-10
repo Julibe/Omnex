@@ -1,11 +1,32 @@
 <?php
 	/*
-	* ----------------------------------------------------------------------------
-	* Omnex - The Asset Explorer. Everything. Accounted for.
-	* ----------------------------------------------------------------------------
-	* Author: Julian De Salvador (Julibe)1
-	* ----------------------------------------------------------------------------
+		* ----------------------------------------------------------------------------
+		* Omnex - The Asset Explorer. Everything. Accounted for.
+		* ----------------------------------------------------------------------------
+		* Description:
+		* Omnex is a modern, intuitive asset management system built to explore, track,
+		* and understand all your assets in one place. With support for multiple file
+		* types, powerful filtering, and a refined interface, Omnex delivers complete
+		* visibility and control, ensuring nothing is overlooked.
+		*
+		* Start exploring and take control of your digital world with Omnex.
+		*
+		* Author:
+		* Julibe - Crafting Digital Experiences
+		* UI/UX, Web, VR, AR, and Interactive Systems
+		*
+		* About:
+		* Hi! I’m Julibe 👻 A supercool Designer with
+		* +18 years of experience in web, apps,
+		* UX/UI, VR, AR, and AI. Lover of sci-fi, TV, anime,
+		* and a pro at game overs since the '90s! 🕹️
+		*
+		* Website: https://julibe.com/
+		* Email: mail@julibe.com
+		* Copyright: © 2026
+		* ----------------------------------------------------------------------------
 	*/
+
 
 	// --- CONFIGURATION ---
 	$assets_dir_name = 'Assets';
