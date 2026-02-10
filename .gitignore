@@ -1,0 +1,27 @@
+# --- OMNEX PRIVATE ASSETS ---
+# Strictly ignore all private project files within the Assets vault
+Assets/*
+
+# Allow the Assets directory structure but ignore contents
+!Assets/.gitkeep
+
+# --- SYSTEM FILES ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# --- PHP/LOGS ---
+error_log
+php_errors.log
+.htaccess
+
+# --- CONFIGURATION ---
+.env
+firebase-config.json
+
+# --- IDE/EDITOR ---
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
