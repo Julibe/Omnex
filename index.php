@@ -47,9 +47,9 @@
 	} catch (Exception $e) {
 		// Fallback if Date fails
 		$current_year = '2026';
-		$meta_date_simple = '2026-02-01';
-		$meta_date_iso = '2026-02-01T01:41:00-05:00';
-		$meta_date_exp = '2027-02-10T00:00:00-05:00';
+		$meta_date_simple = '2026-01-01';
+		$meta_date_iso = '2026-01-01T00:00:00-00:00';
+		$meta_date_exp = '2027-01-01T00:00:00-00:00';
 	}
 
 	// --- CONFIGURATION ---
