@@ -38,7 +38,7 @@
 		$start_of_month = new DateTime($now->format('Y-m-01 01:41:00'));
 
 		$meta_date_simple = $start_of_month->format('Y-m-d'); // 2026-02-01
-		$meta_date_iso    = $start_of_month->format('c');     // ISO 8601 with Offset
+		$meta_date_iso = $start_of_month->format('c'); // ISO 8601 with Offset
 
 		// Expiration: +1 Year from now
 		$expire_date = clone $start_of_month;
@@ -58,8 +58,10 @@
 	$default_accent = 'd946ef';
 	$appName = 'Omnex';
 	$appDesc = 'The Asset Explorer where everything is accounted for';
+	$appAuthor = 'By Julibe';
 	$appKeys = [$appName, 'Julibe', 'Love','asset explorer', 'file manager', 'media library', 'digital vault', 'content tracker', 'resource hub', 'data organizer', 'file catalog', 'asset dashboard'];
-	$appInfo = $appName . ' is here to help you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ By Julibe.';
+	$appInfo = $appName . ' is here to help you explore, track, and understand all your assets in one place. Everything accounted for. Start exploring today. Developed with ❤️ ' . $appAuthor . '.';
+
 	// --- DYNAMIC UI THEME ENGINE ---
 	$ui_color = $_GET['color'] ?? $default_accent;
 
@@ -241,7 +243,7 @@
 	}
 
 	// --- UI COMPONENT RENDERER ---
-	function renderHtml($currentItems, $apiUrl, $currentRelPath, $isVirtual, $hexColor, $glowRgba, $borderRgba, $selectRgba, $defaultHex, $appName, $appDesc, $appInfo, $appKeys, $page, $limit, $current_year, $meta_date_simple, $meta_date_iso, $meta_date_exp) {
+	function renderHtml($currentItems, $apiUrl, $currentRelPath, $isVirtual, $hexColor, $glowRgba, $borderRgba, $selectRgba, $defaultHex, $appAuthor,$appName, $appDesc, $appInfo, $appKeys, $page, $limit, $current_year, $meta_date_simple, $meta_date_iso, $meta_date_exp) {
 
 		usort($currentItems, function($a_node, $b_node) {
 			if ($a_node['type'] !== $b_node['type']) return $a_node['type'] === 'dir' ? -1 : 1;
@@ -295,7 +297,7 @@
 	<!DOCTYPE html>
 	<html lang="en">
 	<head>
-		<title><?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️</title>
+		<title><?php echo $appName; ?> | <?php echo $appDesc; ?> | <?php echo $appAuthor; ?> ❤️</title>
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
 		<meta charset="UTF-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -327,7 +329,7 @@
 		<meta name="p:domain_verify" content="194c03ce4137043917b6eeafb295fcbb">
 		<meta name="location.country" content="US">
 		<meta property="og:site_name" content="<?php echo $appName; ?>">
-		<meta property="og:title" content="<?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️">
+		<meta property="og:title" content="<?php echo $appName; ?> | <?php echo $appDesc; ?> | <?php echo $appAuthor; ?> ❤️">
 		<meta property="og:description" content="<?php echo $appInfo;?>">
 		<meta property="og:type" content="website">
 		<meta property="og:locale" content="en_US">
@@ -338,7 +340,7 @@
 		<meta property="og:email" content="mail@julibe.com">
 		<meta property="og:country-name" content="US">
 		<meta property="al:web:url" content="./">
-		<meta name="twitter:title" content="<?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️">
+		<meta name="twitter:title" content="<?php echo $appName; ?> | <?php echo $appDesc; ?> | <?php echo $appAuthor; ?> ❤️">
 		<meta name="twitter:description" content="<?php echo $appInfo;?>">
 		<meta name="twitter:site" content="@julibe">
 		<meta name="twitter:creator" content="@julibe">
@@ -360,7 +362,7 @@
 		<meta name="msapplication-tooltip" content="<?php echo $appInfo;?>">
 		<meta name="msapplication-starturl" content="./">
 		<meta name="datacite.creator" content="Julibe">
-		<meta name="datacite.title" content="<?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️">
+		<meta name="datacite.title" content="<?php echo $appName; ?> | <?php echo $appDesc; ?> | <?php echo $appAuthor; ?> ❤️">
 		<meta name="datacite.publisher" content="Julibe">
 		<meta name="datacite.resourceType" content="InteractiveResource">
 		<meta name="datacite.subject" content="<?php echo implode(',', $appKeys); ?>">
@@ -384,7 +386,7 @@
 		<script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "v20xjtjk1h");</script>
 		<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"0948b735ca7842359091b2bd8fdefb54"}'></script>
 		<script>const firebaseConfig={"apiKey":"AIzaSyDhRbFy9m-NXZVkozYJwKdDYJuwsL6W_bw","authDomain":"pushnotificationsio.firebaseapp.com","databaseURL":"https:\/\/pushnotificationsio.firebaseio.com","projectId":"pushnotificationsio","storageBucket":"pushnotificationsio.appspot.com","messagingSenderId":"788493704860","appId":"1:788493704860:web:ba71fd692e7cc9651f5759","measurementId":"G-NXS0Z75BCH"};</script>
-		<script type="application/ld+json">{ "@context": "https://schema.org", "@type": "WebSite", "name": "<?php echo $appName; ?> | <?php echo $appDesc; ?> | By Julibe ❤️", "url": "./", "description": "<?php echo $appInfo;?>", "author": { "@type": "Person", "name": "Julibe" }, "image": "https://apps.julibe.com/media/vexom/./media/vexom/none-image.webp", "dateCreated": "<?php echo $meta_date_simple; ?>", "dateModified": "<?php echo $meta_date_simple; ?>", "inLanguage": "en"}</script>
+		<script type="application/ld+json">{ "@context": "https://schema.org", "@type": "WebSite", "name": "<?php echo $appName; ?> | <?php echo $appDesc; ?> | <?php echo $appAuthor; ?> ❤️", "url": "./", "description": "<?php echo $appInfo;?>", "author": { "@type": "Person", "name": "Julibe" }, "image": "https://apps.julibe.com/media/vexom/./media/vexom/none-image.webp", "dateCreated": "<?php echo $meta_date_simple; ?>", "dateModified": "<?php echo $meta_date_simple; ?>", "inLanguage": "en"}</script>
 
 		<link rel="stylesheet" href="styles/styles.css">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -414,7 +416,7 @@
 				<div class="user-profile">
 					<div class="avatar"><i class="fa-solid fa-boxes-stacked"></i></div>
 					<div class="info">
-						<span class="name"><?php echo $appName; ?></span>
+						<span class="name"><?php echo $appName; ?> <?php echo $appAuthor; ?></span>
 						<span class="slogan"><?php echo $appDesc; ?></span>
 					</div>
 				</div>
@@ -513,7 +515,7 @@
 										elseif(in_array($a_ext, ['zip','rar','7z','tar','gz'])) echo 'fa-file-zipper';
 										elseif(in_array($a_ext, ['exe','msi','dmg'])) echo 'fa-computer';
 										else echo 'fa-file-lines';
-										?>"<? if($is_a_dir && isset($a_item['color'])) {?> style="color: #<?php echo $a_item['color'] ; ?>;" <?}?>></i>
+										?>" <?php if($is_a_dir && isset($a_item['color'])) { ?>style="color: #<?php echo $a_item['color']; ?>;"<?php } ?>></i>
 									</div>
 								<?php endif; ?>
 							</div>
@@ -551,7 +553,7 @@
 							<li> <a href="mailto:mail@julibe.com" title="Send a good old digital email to Julibe 📧" aria-label="Send Email to Julibe" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#de4138; --c-text:#ffffff; --c-high:#edba1c;"> <span class="icon fa fa-solid fa-envelope"></span> <span class="title">Email</span> </a> </li>
 						</ul>
 					</nav>
-					<p style="margin-top:1rem; font-size:0.75rem; text-align:center; color: var(--text_dim);">© <?php echo $current_year; ?> <?php echo $appName; ?>. All rights reserved. Crafted with ❤️ by Julibe.</p>
+					<p style="margin-top:1rem; font-size:0.75rem; text-align:center; color: var(--text_dim);">© <?php echo $current_year; ?> <?php echo $appName; ?>. All rights reserved. Crafted with ❤️ <?php echo $appAuthor; ?> .</p>
 				</footer>
 			</main>
 		</div>
@@ -594,7 +596,7 @@
 			$gather_items = scanDirectory($scan_target, $base_assets_path, $script_dir_abs, $base_url_root, $allowed_extensions, false);
 		}
 		// Pass paging data + date variables to the HTML renderer
-		renderHtml($gather_items, $current_api_url, $current_relative_view, $is_virtual_root, $ui_color, $accent_glow_rgba, $accent_border_rgba, $selection_bg_rgba, $default_accent, $appName, $appDesc, $appInfo, $appKeys, $current_page, $items_per_page, $current_year, $meta_date_simple, $meta_date_iso, $meta_date_exp);
+		renderHtml($gather_items, $current_api_url, $current_relative_view, $is_virtual_root, $ui_color, $accent_glow_rgba, $accent_border_rgba, $selection_bg_rgba, $default_accent, $appAuthor,$appName, $appDesc, $appInfo, $appKeys, $current_page, $items_per_page, $current_year, $meta_date_simple, $meta_date_iso, $meta_date_exp);
 	} else {
 		// API Renders full tree (No Pagination)
 		$api_tree = [];

@@ -106,6 +106,7 @@ body {
 	font-size: 1.2rem;
 	box-shadow: 0 4px 15px var(--accent_glow);
 	transition: 0.3s var(--transition-smooth);
+	aspect-ratio: 1;
 }
 
 .user-profile .avatar:hover {
