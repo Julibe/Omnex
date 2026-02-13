@@ -75,7 +75,7 @@
 	$selection_bg_rgba = "rgba($r_val, $g_val, $b_val, 0.3)";
 
 	function stringToColor($str_input) {
-		$hash_val = md5($str_input);
+		$hash_val = md5(rand(1,99).$str_input);
 		return substr($hash_val, 0, 6);
 	}
 
@@ -429,7 +429,7 @@
 							if ($f_node['type'] !== 'dir') continue;
 							$node_f_color = stringToColor($f_node['filename']);
 						?>
-							<a href="<?php echo $mkLink(['view'=>$f_node['relative_path'], 'page'=>1]); ?>"
+							<a href="<?php echo $mkLink(['view'=>$f_node['relative_path'],'color'=>$node_f_color, 'page'=>1]); ?>"
 							class="nav-link"
 							style="--folder-hue: #<?php echo $node_f_color; ?>;">
 							<i class="fa-solid fa-folder" style="color: var(--folder-hue);"></i> <?php echo $f_node['filename']; ?>
@@ -451,8 +451,9 @@
 							case 'Code': $g_icon = 'fa-code'; $description = '💻 Master all Code Files (JS, TS, HTML, CSS, PHP, JSON, XML, MD) - Code like a pro!'; break;
 							case 'Documents': $g_icon = 'fa-file-lines'; $description = '📄 Access all Document Files (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX) - Business at your command!'; break;
 						}
+						$col = stringToColor($g_name);
 					?>
-						<a href="<?php echo $mkLink(['type'=>$g_types_str, 'page'=>1]); ?>" class="nav-link <?php echo (isset($_GET['type']) && $_GET['type'] === $g_types_str)?'active':''; ?>" title="<?php echo $description; ?>" aria-label="Filter assets by <?php echo $g_name; ?>"><i class="fa-solid <?php echo $g_icon; ?>"></i> <?php echo $g_name; ?></a>
+						<a href="<?php echo $mkLink(['type'=>$g_types_str, 'page'=>1, 'color'=>$col]); ?>" class="nav-link <?php echo (isset($_GET['type']) && $_GET['type'] === $g_types_str)?'active':''; ?>" title="<?php echo $description; ?>" aria-label="Filter assets by <?php echo $g_name; ?>"><i class="fa-solid <?php echo $g_icon; ?>" style="color: #<?php echo $col; ?>;"	></i> <?php echo $g_name; ?></a>
 					<?php endforeach; ?>
 				</nav>
 			</aside>
@@ -487,6 +488,7 @@
 					foreach ($paged_items as $idx => $a_item):
 						$a_ext = $a_item['extension'];
 						$is_a_dir = $a_item['type'] === 'dir';
+						$a_item['color'] = stringToColor($a_item['filename']);
 						$is_a_image = in_array($a_ext, ['jpg','jpeg','png','gif','webp','svg']);
 						$a_b64 = base64_encode(json_encode($a_item));
 						$a_click = $is_a_dir
@@ -500,17 +502,19 @@
 								<?php if ($is_a_image): ?>
 									<img loading="lazy" src="<?php echo $a_item['actual_path']; ?>" alt="">
 								<?php else: ?>
-									<div class="fallback-icon"><?php
-										if($is_a_dir) echo '<i class="fa-solid fa-folder-closed"></i>';
-										elseif(in_array($a_ext, ['glb','gltf','obj','fbx'])) echo '<i class="fa-solid fa-cube"></i>';
-										elseif(in_array($a_ext, ['mp4', 'webm', 'mov', 'mkv','m4v', 'avi', 'flv', 'wmv', 'mts', 'ts', 'ogv', 'vp9'])) echo '<i class="fa-solid fa-film"></i>';
-										elseif(in_array($a_ext, ['mp3','wav','ogg','flac','aac','m4a','opus','weba'])) echo '<i class="fa-solid fa-music"></i>';
-										elseif(in_array($a_ext, ['js','ts','jsx','tsx','html','css','scss','sass','json','xml','php','txt','md','yml'])) echo '<i class="fa-solid fa-code"></i>';
-										elseif(in_array($a_ext, ['pdf','doc','docx','xls','xlsx','ppt','pptx'])) echo '<i class="fa-solid fa-file-lines"></i>';
-										elseif(in_array($a_ext, ['zip','rar','7z','tar','gz'])) echo '<i class="fa-solid fa-file-zipper"></i>';
-										elseif(in_array($a_ext, ['exe','msi','dmg'])) echo '<i class="fa-solid fa-computer"></i>';
-										else echo '<i class="fa-solid fa-file-lines"></i>';
-									?></div>
+									<div class="fallback-icon">
+										<i class="fa-solid <?php
+										if($is_a_dir) echo 'fa-folder-closed';
+										elseif(in_array($a_ext, ['glb','gltf','obj','fbx'])) echo 'fa-cube';
+										elseif(in_array($a_ext, ['mp4', 'webm', 'mov', 'mkv','m4v', 'avi', 'flv', 'wmv', 'mts', 'ts', 'ogv', 'vp9'])) echo 'fa-film';
+										elseif(in_array($a_ext, ['mp3','wav','ogg','flac','aac','m4a','opus','weba'])) echo 'fa-music';
+										elseif(in_array($a_ext, ['js','ts','jsx','tsx','html','css','scss','sass','json','xml','php','txt','md','yml'])) echo 'fa-code';
+										elseif(in_array($a_ext, ['pdf','doc','docx','xls','xlsx','ppt','pptx'])) echo 'fa-file-lines';
+										elseif(in_array($a_ext, ['zip','rar','7z','tar','gz'])) echo 'fa-file-zipper';
+										elseif(in_array($a_ext, ['exe','msi','dmg'])) echo 'fa-computer';
+										else echo 'fa-file-lines';
+										?>"<? if($is_a_dir && isset($a_item['color'])) {?> style="color: #<?php echo $a_item['color'] ; ?>;" <?}?>></i>
+									</div>
 								<?php endif; ?>
 							</div>
 						</div>
@@ -547,7 +551,7 @@
 							<li> <a href="mailto:mail@julibe.com" title="Send a good old digital email to Julibe 📧" aria-label="Send Email to Julibe" target="_social" rel="noopener noreferrer" class="button social-button" style="--c:#de4138; --c-text:#ffffff; --c-high:#edba1c;"> <span class="icon fa fa-solid fa-envelope"></span> <span class="title">Email</span> </a> </li>
 						</ul>
 					</nav>
-					<p style="margin-top:1rem; font-size:0.8rem; color: var(--text_dim);">© <?php echo $current_year; ?> <?php echo $appName; ?>. All rights reserved. Crafted with ❤️ by Julibe.</p>
+					<p style="margin-top:1rem; font-size:0.75rem; text-align:center; color: var(--text_dim);">© <?php echo $current_year; ?> <?php echo $appName; ?>. All rights reserved. Crafted with ❤️ by Julibe.</p>
 				</footer>
 			</main>
 		</div>
@@ -582,7 +586,8 @@
 					'filename' => $r_node['name'], 'extension' => '', 'type' => 'dir', 'mime_type' => '',
 					'size_bytes' => 0, 'size_formatted' => '',
 					'relative_path' => $r_path_rel,
-					'actual_path' => ''
+					'actual_path' => '',
+					'color' => stringToColor($r_node['name'])
 				];
 			}
 		} else {
