@@ -1,4 +1,6 @@
 <?php
+	header('Access-Control-Allow-Origin: *');
+
 	/*
 		* ----------------------------------------------------------------------------
 		* Omnex - The Asset Explorer where everything is accounted for
